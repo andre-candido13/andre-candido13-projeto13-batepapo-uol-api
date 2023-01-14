@@ -4,7 +4,7 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": " DATABASE_URL=mongodb://127.0.0.1:27017 nodemon app.js"
+    "start": "nodemon app.js"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,7 @@
     "joi": "^17.7.0",
     "modules": "^0.4.0",
     "mongodb": "^4.13.0",
+    "node": "^19.4.0",
     "node-modules": "^1.0.1",
     "nodemon": "^2.0.20"
   }
