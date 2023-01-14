@@ -2,15 +2,22 @@
   "name": "back-end",
   "version": "1.0.0",
   "main": "app.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": " DATABASE_URL=mongodb://127.0.0.1:27017 nodemon app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "joi": "^17.7.0",
     "modules": "^0.4.0",
-    "node-modules": "^1.0.1"
+    "mongodb": "^4.13.0",
+    "node-modules": "^1.0.1",
+    "nodemon": "^2.0.20"
   }
 }
