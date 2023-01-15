@@ -161,14 +161,35 @@ app.get("/messages", async (req, res) => {
 
         res.send(inverse.slice(0, limit))
 
-      
-
-
-
     } catch (err) {
        return res.status(500).send(err.message)
     }
 
+})
+
+app.post("/status/:id", async (req, res) =>{
+
+const user = req.user.headers
+
+try{
+
+const usuarioExistente = await db.collection("participants").findOne({ name: user })
+if (!usuarioExistente) {
+    return res.status(404).send("Usuário não encontrado") }
+
+
+    await db.collection("participants").updateOne({
+        name: user,
+        $set: {lastStatus: Date.now()}
+    })
+
+    res.status(200)
+
+
+} catch (err) {
+
+    
+}
 
 })
 
