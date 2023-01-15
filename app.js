@@ -50,8 +50,14 @@ app.get("/participants", async (req, res) => {
 
     const { name } = req.body
 
+    try{
+
     const participants = await db.collection("participants").find().toArray()
     res.send(participants)
+
+    } catch(err) {
+        return res.status(500).send(err.message)
+    }
 
 })
 
@@ -91,7 +97,7 @@ app.post("/participants", async (req, res) => {
             })
 
     } catch (err) {
-        return res.status(422)
+        return res.status(500).send(err.message)
     }
 
 })
@@ -126,11 +132,11 @@ app.post("/messages", async (req, res) => {
              text: text,
              type: type,
              time: hora })
-         return res.status(201)
+         return res.sendStatus(201)
 
     } catch (err) {
 
-        console.log(err)
+        return res.status(500).send(err.message)
     }
 
 })
@@ -139,18 +145,27 @@ app.post("/messages", async (req, res) => {
 app.get("/messages", async (req, res) => {
 
     const { limit } = req.query
+    const { user } = req.headers
 
     try {
 
-        const mensagem = await db.collection("messages").find().toArray()
-        const limite = (mensagem.length - limit)
-        return res.send(mensagem.slice(limite))
+        const msg = await db.collection("messages").find({
+            $or:
+                [
+                    { to: user, type: "private_message" },
+                    { type: "message" },
+                    { type: "status" },
+                    {from:user}
+                ]
+        }).limit(Number(limit)).toArray();
+
+        res.send(msg);
 
 
 
 
     } catch (err) {
-        res.status(500)
+       return res.status(500).send(err.message)
     }
 
 
