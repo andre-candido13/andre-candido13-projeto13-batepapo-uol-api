@@ -3,6 +3,8 @@ import cors from "cors"
 import { MongoClient } from "mongodb"
 import joi from "joi"
 import dotenv from "dotenv"
+import dayjs from "dayjs"
+
 
 dotenv.config()
 
@@ -15,7 +17,9 @@ app.use(cors())
 
 const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
-let db;
+let db
+
+let hora = dayjs().format("HH:mm:ss")
 
 mongoClient.connect()
 .then(() => {
@@ -28,38 +32,82 @@ mongoClient.connect()
 
 
 
-app.get("/participants", (req, res) => {
+app.get("/participants", async (req, res) => {
 
     const { name } = req.body
 
-    const participants = db.collection("participants").find().toArray()
+    const participants = await db.collection("participants").find().toArray()
     res.send(participants)
 
 })
 
 
-app.post("/participants", (req, res) => {
+app.post("/participants", async (req, res) => {
 
     const { name } = req.body
+    
+try {
+    const partsExiste = await db.collection("participants").findOne({ name })
 
-   const parts = db.collection("participants").insertOne({ name: name, lastStatus: Date.now() })
+    if (partsExiste) { return res.status(409).send("Esse usuário já existe")}
+
+   const parts = await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() })
    .then(() => {
     res.status(201).send("Usuario cadastrado!")
    })
-   .catch(() => {
-    res.status(422).send("Erro")
-   })
 
-   const parts2 = db.collection("participants").find({ name })
+   const messages = await db.collection("participants").insertOne({ 
+    from: name, 
+    to: 'Todos', 
+    text: 'entra na sala...', 
+    type: 'status', 
+    time: hora})
+    .then(() => {
+        res.status(201)
+    })
 
-   if (!parts2)
-   return res.status(409).send("Este usuário já existe!")
+} catch (err) {
+    return res.status(500)
+}
+
 })
 
 
 
 
-app.listen(6000, () => {
+app.post("/messages", async (req, res) => {
+
+const { to, text, type} = req.body
+const { user } = req.headers
+
+try {
+
+const mensagem = await db.collection("messages").insertOne({ from: user, to, text, type, time: hora})
+.then(() => {
+    return res.status(201).send(mensagem)
+})
+
+} catch (err) {
+ 
+ console.log(err)
+}
+
+app.get("/messages", async (req, res) => {
+
+
+    
+})
+
+
+
+
+
+
+})
+
+
+
+app.listen(5000, () => {
     console.log("foi legal!")
 
 })
