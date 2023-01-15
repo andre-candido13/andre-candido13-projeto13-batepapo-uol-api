@@ -154,7 +154,7 @@ app.get("/messages", async (req, res) => {
             return res.sendStatus(422)
         }
 
-        const msg = await db.collection("messages").find({ $or: [{ from: user }, { to: user }] }).toArray()
+        const msg = await db.collection("messages").find({ $or: [{ from: user }, {type: "private message"}, { to: user }, { type: "private message"}] }).toArray()
         const inverse = [...msg].reverse()
         if (!limit) {
             return res.send(msg)
