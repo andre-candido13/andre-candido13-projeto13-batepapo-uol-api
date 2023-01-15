@@ -127,11 +127,10 @@ app.post("/messages", async (req, res) => {
         }
             
         await db.collection("messages").insertOne({ 
-             from: user,
              to: to,
              text: text,
              type: type,
-             time: hora })
+             from: user })
          return res.sendStatus(201)
 
     } catch (err) {
@@ -152,10 +151,11 @@ app.get("/messages", async (req, res) => {
         const msg = await db.collection("messages").find({
             $or:
                 [
-                    { to: user, type: "private_message" },
+                    { from:user },
+                    { to: user}, 
+                    { text: "entra na sala..." },
                     { type: "message" },
-                    { type: "status" },
-                    {from:user}
+                    { time: hora }
                 ]
         }).limit(Number(limit)).toArray();
 
