@@ -85,7 +85,7 @@ app.post("/participants", async (req, res) => {
                 res.status(201).send("Usuario cadastrado!")
             })
 
-         await db.collection("participants").insertOne({
+         await db.collection("messages").insertOne({
             from: name,
             to: 'Todos',
             text: 'entra na sala...',
