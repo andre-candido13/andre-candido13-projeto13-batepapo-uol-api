@@ -180,7 +180,7 @@ if (!usuarioExistente) {
 
     await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}})
 
-    res.status(200)
+    res.status(200).send("OK")
 
 
 } catch (err) {
