@@ -66,7 +66,7 @@ app.post("/participants", async (req, res) => {
         const erro = validation.error.details.map((err) => {
             return err.message
         })
-        return erro.status(422).send(erro)
+        return res.status(422).send(erro)
     }
 
     try {
@@ -79,7 +79,7 @@ app.post("/participants", async (req, res) => {
                 res.status(201).send("Usuario cadastrado!")
             })
 
-        const messages = await db.collection("participants").insertOne({
+         await db.collection("participants").insertOne({
             from: name,
             to: 'Todos',
             text: 'entra na sala...',
@@ -115,10 +115,18 @@ app.post("/messages", async (req, res) => {
 
     try {
 
-        const mensagem = await db.collection("messages").insertOne({ from: user, to, text, type, time: hora })
-            .then(() => {
-                return res.status(201).send(mensagem)
-            })
+        const userRepeat = await db.collection("participants").findOne({user: user.user})
+        if (!userRepeat) {
+            return res.status(422).send("Usuario já existe")
+        }
+            
+        await db.collection("messages").insertOne({ 
+             from: user,
+             to: to,
+             text: text,
+             type: type,
+             time: hora })
+         return res.status(201)
 
     } catch (err) {
 
