@@ -50,12 +50,12 @@ app.get("/participants", async (req, res) => {
 
     const { name } = req.body
 
-    try{
+    try {
 
-    const participants = await db.collection("participants").find().toArray()
-    res.send(participants)
+        const participants = await db.collection("participants").find().toArray()
+        res.send(participants)
 
-    } catch(err) {
+    } catch (err) {
         return res.status(500).send(err.message)
     }
 
@@ -85,7 +85,7 @@ app.post("/participants", async (req, res) => {
                 res.status(201).send("Usuario cadastrado!")
             })
 
-         await db.collection("messages").insertOne({
+        await db.collection("messages").insertOne({
             from: name,
             to: 'Todos',
             text: 'entra na sala...',
@@ -121,18 +121,19 @@ app.post("/messages", async (req, res) => {
 
     try {
 
-        const userRepeat = await db.collection("participants").findOne({user: user.user})
+        const userRepeat = await db.collection("participants").findOne({ user: user.user })
         if (!userRepeat) {
             return res.status(422).send("Usuario já existe")
         }
-            
-        await db.collection("messages").insertOne({ 
-             from: user,
-             to: to,
-             text: text,
-             type: type,
-             time: hora })
-         return res.sendStatus(201)
+
+        await db.collection("messages").insertOne({
+            from: user,
+            to: to,
+            text: text,
+            type: type,
+            time: hora
+        })
+        return res.sendStatus(201)
 
     } catch (err) {
 
@@ -153,46 +154,64 @@ app.get("/messages", async (req, res) => {
             return res.sendStatus(422)
         }
 
-        const msg = await db.collection("messages").find({ $or: [ {from: user}, {to: user} ] }).toArray()
-        const inverse= [...msg].reverse()
-        if(!limit){
+        const msg = await db.collection("messages").find({ $or: [{ from: user }, { to: user }] }).toArray()
+        const inverse = [...msg].reverse()
+        if (!limit) {
             return res.send(msg)
         }
 
         res.send(inverse.slice(0, limit))
 
     } catch (err) {
-       return res.status(500).send(err.message)
+        return res.status(500).send(err.message)
     }
 
 })
 
-app.post("/status", async (req, res) =>{
+app.post("/status", async (req, res) => {
 
-const { user } = req.headers
+    const { user } = req.headers
 
-try{
+    try {
 
-let usuarioExistente = await db.collection("participants").findOne({ name: user })
-if (!usuarioExistente) {
-    return res.status(404).send("Usuário não encontrado") }
-
-
-    await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}})
-
-    res.status(200).send("OK")
+        let usuarioExistente = await db.collection("participants").findOne({ name: user })
+        if (!usuarioExistente) {
+            return res.status(404).send("Usuário não encontrado")
+        }
 
 
-} catch (err) {
- return res.status(404).send(err.message)
-    
-}
+        await db.collection("participants").updateOne({ name: user }, { $set: { lastStatus: Date.now() } })
 
+        res.status(200).send("OK")
+
+
+    } catch (err) {
+        return res.status(404).send(err.message)
+
+    }
 })
 
+    setInterval(async () => {
 
+        let informacoes = await db.collection("participants").find().toArray()
 
-app.listen(5000, () => {
-    console.log("foi legal!")
+        informacoes.forEach(async(item) => {
+            let tempo = Date.now()
+            let nome = item.name
+            if (tempo - item.lastStatus > 15000) {
+                await db.collection("participants").deleteOne({ name: nome })
+                await db.collection("messages").insertOne({
+                    from: nome,
+                    to: "Todos",
+                    text: "sai da sala...",
+                    type: "status",
+                    time: hora})
+            }})}, 15000)
+             
+                
+   
 
-})
+        app.listen(5000, () => {
+            console.log("foi legal!")
+
+        })
