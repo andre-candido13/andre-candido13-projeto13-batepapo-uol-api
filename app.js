@@ -45,6 +45,18 @@ app.get("/participants", async (req, res) => {
 app.post("/participants", async (req, res) => {
 
     const { name } = req.body
+
+    const userSchema = joi.object({
+    name: joi.string().empty().required()
+    })
+
+    const validation = schema.validate({ name }, {abortEarly: false})
+    if (validation.error) {
+        const erro = validation.err.detais.map((err) => {
+            return err.message
+        })
+        return erro.status(422).send(erro)
+    }
     
 try {
     const partsExiste = await db.collection("participants").findOne({ name })
@@ -80,6 +92,21 @@ app.post("/messages", async (req, res) => {
 const { to, text, type} = req.body
 const { user } = req.headers
 
+const messageSchema = joi.object({
+    to: joi.string().required(),
+    text: joi.string().required(),
+    type: joi.string().valid("message", "private_message").required(),
+    user: joi.required()
+})
+
+const validation = schema.validate({ to, text, type, user }, {abortEarly: false})
+if (validation.error) {
+    const erro = validation.err.detais.map((err) => {
+        return err.message
+    })
+    return erro.status(422).send(erro)
+}
+
 try {
 
 const mensagem = await db.collection("messages").insertOne({ from: user, to, text, type, time: hora})
@@ -95,6 +122,8 @@ const mensagem = await db.collection("messages").insertOne({ from: user, to, tex
 app.get("/messages", async (req, res) => {
 
 const { limit } = req.query
+
+
 
 try {
 
