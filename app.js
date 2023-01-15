@@ -67,7 +67,7 @@ try {
     })
 
 } catch (err) {
-    return res.status(500)
+    return res.status(422)
 }
 
 })
@@ -94,8 +94,20 @@ const mensagem = await db.collection("messages").insertOne({ from: user, to, tex
 
 app.get("/messages", async (req, res) => {
 
+const { limit } = req.query
 
-    
+try {
+
+const mensagem = await db.collection("messages").find().toArray()
+const limite = (mensagem.length - limit)
+return res.send(mensagem.slice(limite))
+
+} catch(err) {
+    res.status(500)
+}
+
+
+
 })
 
 
