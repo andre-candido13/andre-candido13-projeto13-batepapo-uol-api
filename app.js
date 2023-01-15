@@ -22,12 +22,26 @@ let db
 let hora = dayjs().format("HH:mm:ss")
 
 mongoClient.connect()
-.then(() => {
-    db = mongoClient.db()
-    console.log("foi daora mongodb!")
+    .then(() => {
+        db = mongoClient.db()
+        console.log("foi daora mongodb!")
+    })
+    .catch(() => {
+        console.log("falhou")
+    })
+
+
+
+
+const participantSchema = joi.object({
+    name: joi.string().empty().required()
 })
-.catch(() => {
-    console.log("falhou")  
+
+const messageSchema = joi.object({
+    to: joi.string().required(),
+    text: joi.string().required(),
+    type: joi.string().valid("message", "private_message").required(),
+    user: joi.required()
 })
 
 
@@ -46,41 +60,39 @@ app.post("/participants", async (req, res) => {
 
     const { name } = req.body
 
-    const userSchema = joi.object({
-    name: joi.string().empty().required()
-    })
 
-    const validation = schema.validate({ name }, {abortEarly: false})
+    const validation = participantSchema.validate({ name }, { abortEarly: false })
     if (validation.error) {
-        const erro = validation.err.detais.map((err) => {
+        const erro = validation.error.details.map((err) => {
             return err.message
         })
         return erro.status(422).send(erro)
     }
-    
-try {
-    const partsExiste = await db.collection("participants").findOne({ name })
 
-    if (partsExiste) { return res.status(409).send("Esse usuário já existe")}
+    try {
+        const partsExiste = await db.collection("participants").findOne({ name })
 
-   const parts = await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() })
-   .then(() => {
-    res.status(201).send("Usuario cadastrado!")
-   })
+        if (partsExiste) { return res.status(409).send("Esse usuário já existe") }
 
-   const messages = await db.collection("participants").insertOne({ 
-    from: name, 
-    to: 'Todos', 
-    text: 'entra na sala...', 
-    type: 'status', 
-    time: hora})
-    .then(() => {
-        res.status(201)
-    })
+        const parts = await db.collection("participants").insertOne({ name: name, lastStatus: Date.now() })
+            .then(() => {
+                res.status(201).send("Usuario cadastrado!")
+            })
 
-} catch (err) {
-    return res.status(422)
-}
+        const messages = await db.collection("participants").insertOne({
+            from: name,
+            to: 'Todos',
+            text: 'entra na sala...',
+            type: 'status',
+            time: hora
+        })
+            .then(() => {
+                res.status(201)
+            })
+
+    } catch (err) {
+        return res.status(422)
+    }
 
 })
 
@@ -89,59 +101,49 @@ try {
 
 app.post("/messages", async (req, res) => {
 
-const { to, text, type} = req.body
-const { user } = req.headers
+    const { to, text, type } = req.body
+    const { user } = req.headers
 
-const messageSchema = joi.object({
-    to: joi.string().required(),
-    text: joi.string().required(),
-    type: joi.string().valid("message", "private_message").required(),
-    user: joi.required()
+
+    const validation = messageSchema.validate({ to, text, type, user }, { abortEarly: false })
+    if (validation.error) {
+        const erro = validation.error.details.map((err) => {
+            return err.message
+        })
+        return res.status(422).send(erro)
+    }
+
+    try {
+
+        const mensagem = await db.collection("messages").insertOne({ from: user, to, text, type, time: hora })
+            .then(() => {
+                return res.status(201).send(mensagem)
+            })
+
+    } catch (err) {
+
+        console.log(err)
+    }
+
 })
 
-const validation = schema.validate({ to, text, type, user }, {abortEarly: false})
-if (validation.error) {
-    const erro = validation.err.detais.map((err) => {
-        return err.message
-    })
-    return erro.status(422).send(erro)
-}
-
-try {
-
-const mensagem = await db.collection("messages").insertOne({ from: user, to, text, type, time: hora})
-.then(() => {
-    return res.status(201).send(mensagem)
-})
-
-} catch (err) {
- 
- console.log(err)
-}
 
 app.get("/messages", async (req, res) => {
 
-const { limit } = req.query
+    const { limit } = req.query
 
+    try {
 
-
-try {
-
-const mensagem = await db.collection("messages").find().toArray()
-const limite = (mensagem.length - limit)
-return res.send(mensagem.slice(limite))
-
-} catch(err) {
-    res.status(500)
-}
-
-
-
-})
+        const mensagem = await db.collection("messages").find().toArray()
+        const limite = (mensagem.length - limit)
+        return res.send(mensagem.slice(limite))
 
 
 
 
+    } catch (err) {
+        res.status(500)
+    }
 
 
 })
