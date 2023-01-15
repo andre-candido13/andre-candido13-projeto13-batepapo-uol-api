@@ -167,27 +167,24 @@ app.get("/messages", async (req, res) => {
 
 })
 
-app.post("/status/:id", async (req, res) =>{
+app.post("/status", async (req, res) =>{
 
-const user = req.user.headers
+const { user } = req.headers
 
 try{
 
-const usuarioExistente = await db.collection("participants").findOne({ name: user })
+let usuarioExistente = await db.collection("participants").findOne({ name: user })
 if (!usuarioExistente) {
     return res.status(404).send("Usuário não encontrado") }
 
 
-    await db.collection("participants").updateOne({
-        name: user,
-        $set: {lastStatus: Date.now()}
-    })
+    await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}})
 
     res.status(200)
 
 
 } catch (err) {
-
+ return res.status(404).send(err.message)
     
 }
 
