@@ -199,13 +199,16 @@ app.post("/status", async (req, res) => {
             let tempo = Date.now()
             let nome = item.name
             if (tempo - item.lastStatus > 15000) {
-                await db.collection("participants").deleteOne({ name: nome })
+
                 await db.collection("messages").insertOne({
                     from: nome,
                     to: "Todos",
                     text: "sai da sala...",
                     type: "status",
                     time: hora})
+                    
+                await db.collection("participants").deleteOne({ name: nome })
+             
             }})}, 15000)
              
                 
